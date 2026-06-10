@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  push:
+    branches: [master]
   pull_request:
 
 permissions:
@@ -188,3 +190,18 @@ jobs:
 
       - name: Run Python bindings tests
         run: python -m pytest bindings/python/tests -q
+
+  # ─── Unified gate ─────────────────────────────────────────────
+  # Branch protection requires only: CI / ok
+  ok:
+    name: ok
+    if: always()
+    needs: [host-build-and-test, arduino-uno-compile, arduino-esp32-compile, python-bindings]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail if any upstream job failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - name: Pass
+        run: echo 'All checks passed or were skipped'
