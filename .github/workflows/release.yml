@@ -12,6 +12,7 @@ jobs:
   release-linux-x86_64:
     name: Release (linux-x86_64)
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v6
@@ -24,6 +25,55 @@ jobs:
       - name: Extract version
         id: version
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate version metadata
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python3 <<'PY'
+          import json
+          import os
+          import pathlib
+          import re
+          import sys
+
+          expected = os.environ["RELEASE_VERSION"]
+          checks = {}
+
+          cmake_text = pathlib.Path("CMakeLists.txt").read_text()
+          cmake_match = re.search(r"project\s*\([\s\S]*?\bVERSION\s+([^\s\)]+)", cmake_text)
+          if not cmake_match:
+            raise SystemExit("Could not find project VERSION in CMakeLists.txt")
+          checks["CMakeLists.txt"] = cmake_match.group(1)
+
+          pyproject_text = pathlib.Path("bindings/python/pyproject.toml").read_text()
+          pyproject_match = re.search(r"(?m)^version\s*=\s*[\"']([^\"']+)[\"']", pyproject_text)
+          if not pyproject_match:
+            raise SystemExit("Could not find project version in bindings/python/pyproject.toml")
+          checks["bindings/python/pyproject.toml"] = pyproject_match.group(1)
+
+          library_properties = pathlib.Path("library.properties").read_text().splitlines()
+          for line in library_properties:
+            if line.startswith("version="):
+              checks["library.properties"] = line.split("=", 1)[1].strip()
+              break
+          else:
+            raise SystemExit("Could not find version in library.properties")
+
+          checks["library.json"] = json.loads(pathlib.Path("library.json").read_text())["version"]
+
+          mismatches = {
+            path: actual
+            for path, actual in checks.items()
+            if actual != expected
+          }
+          if mismatches:
+            for path, actual in mismatches.items():
+              print(f"{path}: expected {expected}, found {actual}", file=sys.stderr)
+            raise SystemExit("Release tag version does not match package metadata")
+
+          print(f"Validated release version {expected}")
+          PY
 
       - name: Configure
         run: cmake --preset host-linux-release
@@ -102,4 +152,3 @@ jobs:
             SHA256SUMS
             manifest.json
           generate_release_notes: true
-

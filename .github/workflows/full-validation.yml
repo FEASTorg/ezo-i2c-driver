@@ -16,6 +16,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PLATFORMIO_VERSION: "6.1.19"
+
 jobs:
   host-linux-debug:
     runs-on: ubuntu-22.04
@@ -76,6 +79,31 @@ jobs:
 
       - name: Package install tree
         run: tar -czf ezo-driver-install-tree.tar.gz -C "${{ github.workspace }}/staging" .
+
+  host-windows:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - preset: host-windows-debug
+            configuration: Debug
+          - preset: host-windows-release
+            configuration: Release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }} --config ${{ matrix.configuration }} --parallel
+
+      - name: Test
+        run: ctest --preset ${{ matrix.preset }} -C ${{ matrix.configuration }}
 
   python-bindings:
     runs-on: ubuntu-22.04
@@ -164,10 +192,10 @@ jobs:
           path: |
             ~/.platformio/.cache
             ~/.platformio/packages
-          key: ${{ runner.os }}-platformio-${{ env.BOARD }}
+          key: ${{ runner.os }}-platformio-${{ env.PLATFORMIO_VERSION }}-${{ env.BOARD }}
 
       - name: Install PlatformIO
-        run: python -m pip install --upgrade platformio
+        run: python -m pip install --upgrade "platformio==${PLATFORMIO_VERSION}"
 
       - name: Compile Arduino library examples
         run: |
@@ -220,10 +248,10 @@ jobs:
           path: |
             ~/.platformio/.cache
             ~/.platformio/packages
-          key: ${{ runner.os }}-platformio-${{ env.BOARD }}
+          key: ${{ runner.os }}-platformio-${{ env.PLATFORMIO_VERSION }}-${{ env.BOARD }}
 
       - name: Install PlatformIO
-        run: python -m pip install --upgrade platformio
+        run: python -m pip install --upgrade "platformio==${PLATFORMIO_VERSION}"
 
       - name: Compile Arduino library examples
         run: |

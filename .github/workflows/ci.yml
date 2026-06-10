@@ -10,6 +10,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  PLATFORMIO_VERSION: "6.1.19"
+
 jobs:
   host-build-and-test:
     runs-on: ubuntu-22.04
@@ -89,10 +92,10 @@ jobs:
           path: |
             ~/.platformio/.cache
             ~/.platformio/packages
-          key: ${{ runner.os }}-platformio-${{ env.BOARD }}
+          key: ${{ runner.os }}-platformio-${{ env.PLATFORMIO_VERSION }}-${{ env.BOARD }}
 
       - name: Install PlatformIO
-        run: python -m pip install --upgrade platformio
+        run: python -m pip install --upgrade "platformio==${PLATFORMIO_VERSION}"
 
       - name: Compile Arduino library examples
         run: |
@@ -145,10 +148,10 @@ jobs:
           path: |
             ~/.platformio/.cache
             ~/.platformio/packages
-          key: ${{ runner.os }}-platformio-${{ env.BOARD }}
+          key: ${{ runner.os }}-platformio-${{ env.PLATFORMIO_VERSION }}-${{ env.BOARD }}
 
       - name: Install PlatformIO
-        run: python -m pip install --upgrade platformio
+        run: python -m pip install --upgrade "platformio==${PLATFORMIO_VERSION}"
 
       - name: Compile Arduino library examples
         run: |
@@ -180,11 +183,8 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Python bindings test dependencies
-        run: python -m pip install --upgrade pip setuptools wheel cffi pytest
-
-      - name: Install bindings package
-        run: python -m pip install -e bindings/python
+      - name: Install Python bindings package
+        run: python -m pip install -e "bindings/python[test]"
 
       - name: Run Python bindings tests
         run: python -m pytest bindings/python/tests -q
