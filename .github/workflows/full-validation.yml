@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Configure
         run: cmake --preset host-linux-debug
@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Configure
         run: cmake --preset host-linux-release
@@ -94,7 +94,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Configure
         run: cmake --preset ${{ matrix.preset }}
@@ -118,7 +118,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -179,7 +179,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -187,7 +187,7 @@ jobs:
           python-version: "3.11"
 
       - name: Cache PlatformIO
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.platformio/.cache
@@ -235,7 +235,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -243,7 +243,7 @@ jobs:
           python-version: "3.11"
 
       - name: Cache PlatformIO
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.platformio/.cache
